@@ -40,9 +40,9 @@ setuptools.setup(
         "License ::  Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    packages=['spec_reader', 'fits_reader'],
+    # packages=['spec_reader', 'fits_reader'],
     # entry_points = {
     #     'console_scripts': ['sample_command = sample_command.sample_command:main']
     # },
-    python_requires='>=3.7',
+    python_requires='>=3.6',
 )
