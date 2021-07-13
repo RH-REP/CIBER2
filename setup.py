@@ -34,13 +34,13 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/RH-REP/CIBER2",
-    packages=setuptools.find_packages(),
+    # packages=setuptools.find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",
         "License ::  Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    # packages=['spec_reader', 'fits_reader'],
+    packages=['spec_reader', 'fits_reader'],
     # entry_points = {
     #     'console_scripts': ['sample_command = sample_command.sample_command:main']
     # },
