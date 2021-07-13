@@ -1,5 +1,6 @@
-# from .fits_reader import (
-#     # hello,
-# )
+from .fits_reader import (
+    fits_reader,
+    shelf,
+)
 
-# __version__ = '1.0.0'
+__version__ = '0.1.0'
