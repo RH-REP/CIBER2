@@ -1,6 +1,10 @@
 
-from . import irradiance
-from . import spec_calibration
-from . import spec_reader
-from . import angle_function
-from . import cf_creater
+from . import (
+    irradiance,
+    spec_calibration,
+    spec_reader,
+    angle_function,
+    cf_creater
+)
+
+__version__ = '0.1.0'
