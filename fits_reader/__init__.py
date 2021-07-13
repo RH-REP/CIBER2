@@ -1,4 +1,4 @@
-from .fits_reader import (
+from . import (
     fits_reader,
     shelf,
 )
