@@ -47,54 +47,55 @@ class IrradianceClass:
 class CF_Class:
     def __init__(self, eps_shelf,ls_irradiance_class,OD,arm_name) :
         self.OD = OD
+        self.arm_name = arm_name
         self.eps_shelf = eps_shelf
-        self.waves_lvf, self.eps_lvf = eps_shelf.getLVFxy(OD,arm_name)
-        self.ls_irradiance_class = ls_irradiance_class
-        # self.ls_irradiance = 
-        self.waves_spec,self.ls_irradinance_reduced = self._reduce_by_ND_fiter()
-        self.ls_irradiance_ip = interpolate.interp1d(self.waves_spec,self.ls_irradinance_reduced,fill_value="extrapolate")(self.waves_lvf)    
-        self.cf = self.ls_irradiance_ip/self.eps_lvf/math.pi * 0.76*1.2
+        self.waves_lvf, self.eps_lvf = self.get_wv_vs_eps_at_lvf()
+        self.waves_spec = ls_irradiance_class.waves
+        self.ls_irradiance = ls_irradiance_class.irradiance
+        _,self.ls_irradinance_reduced = self._reduce_by_ND_fiter()
+        self.ls_irradiance_reduced_ip_to_lvf = interpolate.interp1d(self.waves_spec,self.ls_irradinance_reduced,fill_value="extrapolate")(self.waves_lvf)    
+        self.cf = self.ls_irradiance_reduced_ip_to_lvf/self.eps_lvf/math.pi * 0.76*1.2
     
-    def show_wv_vs_eps_lvf(self):
-        waves_lvf, eps_lvf = self.eps_shelf.getLVFxy(self.OD,"armS")
-        fig,ax = plt.subplots()
-        ax.scatter(waves_lvf, eps_lvf)
-        ax.set_xlabel("wavelength [nm]")
-        ax.set_ylabel("eps")
-        return 
-
-    def show_wv_vs_irradiance(self):
-        fig,ax = plt.subplots()
-
-        ax.scatter(self.waves_spec,self.ls_irradinance_reduced,label= self.OD+" reduced")
-        ax.legend()
-        ax.set_xlabel("wavelength [nm]")
-        ax.set_ylabel("abs irradiance [W/m^2/nm]")
-        ax.set_ylim(1*10**-7,0.01)
-        ax.set_yscale("log")
-
-    def show_wv_vs_cf(self):
-        fig,ax = plt.subplots()
-        ax.scatter(self.waves_lvf,self.cf,label="measured")
-        ax.legend()
-        ax.set_xlim(500,1000)
-        ax.set_ylim(10**-10,10**-8)
-        ax.set_yscale("log")
-        ax.set_xlabel("wavelength [nm]")
-        ax.set_ylabel("CF[radiance/eps]")
-        return 
-    # return waves_lvf,cf 
-
     def _reduce_by_ND_fiter(self):
-        w,transparent = self.get_ND()
-        irradiance_spec_reduced = self.ls_irradiance_class.irradiance * transparent
-        return w,irradiance_spec_reduced
+        _,transparent = self.get_ND()
+        irradiance_spec_reduced = self.ls_irradiance * transparent
+        return _,irradiance_spec_reduced
 
     def get_ND(self):
         file = './lib/filter/'+self.OD+'.csv'
         rawData_np = spec_reader.csv_to_np(file,isHeaderExist=True)
         w,transparent = rawData_np.T[0],rawData_np.T[1]
         return w,transparent
+        
+    def get_wv_vs_eps_at_lvf(self):
+        return self.eps_shelf.getLVFxy(self.OD,self.arm_name)
+
+    def get_eps_img(self):
+        return self.eps_shelf.get_eps_img(self.OD,self.arm_name)
+
+    def get_LVF_img(self):
+        return self.eps_shelf.get_LVF_img(self.OD,self.arm_name)
+    # def show_wv_vs_irradiance(self):
+    #     fig,ax = plt.subplots()
+
+    #     ax.scatter(self.waves_spec,self.ls_irradinance_reduced,label= self.OD+" reduced")
+    #     ax.legend()
+    #     ax.set_xlabel("wavelength [nm]")
+    #     ax.set_ylabel("abs irradiance [W/m^2/nm]")
+    #     ax.set_ylim(1*10**-7,0.01)
+    #     ax.set_yscale("log")
+
+    # def show_wv_vs_cf(self):
+    #     fig,ax = plt.subplots()
+    #     ax.scatter(self.waves_lvf,self.cf,label="measured")
+    #     ax.legend()
+    #     ax.set_xlim(500,1000)
+    #     ax.set_ylim(10**-10,10**-8)
+    #     ax.set_yscale("log")
+    #     ax.set_xlabel("wavelength [nm]")
+    #     ax.set_ylabel("CF[radiance/eps]")
+    #     return 
+
 
 def get_cf_from_theory():
     f = parent_dir + '/spec_lib/cal/20210629_cf.csv'

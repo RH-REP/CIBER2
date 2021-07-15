@@ -20,7 +20,6 @@ class BaffleClass:
     def _get_baffle_function(self,file):
 
         lib = parent_dir + "/spec_lib/angle_vs_sensitivity/"
-        print(lib)
         full_angle, sensitivity = get_rad_vs_sensitivity_from_csv(lib + file)
         centerIndex = int(len(full_angle)/2)
         left_sensitivity = sensitivity[:centerIndex+1][::-1]

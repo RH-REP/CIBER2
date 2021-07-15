@@ -83,6 +83,9 @@ class Reduction_Shelf():
         return img
     
     def get_eps_img(self,book_name,arm_name,):
+        """
+        return img only
+        """
         files ,bg_files=self._get_eps_files(book_name,arm_name)
         img = self._cal_img_mean(files)
         if not(len(bg_files) ==0):
@@ -92,11 +95,16 @@ class Reduction_Shelf():
             print("bg is empty")
         return img
 
-    def show_eps_image(self,book_name,arm_name):
-        img = self.get_eps_img(book_name,arm_name)
-        fig,ax = plt.subplots()
-        ax.imshow(img)
-        return fig,ax
+    def get_LVF_img(self,book_name,arm_name,):
+        img = self.get_eps_img(book_name,arm_name,)
+        img_at_lvf = img[10:150,]
+        return img_at_lvf 
+
+    # def show_eps_image(self,book_name,arm_name):
+    #     img = self.get_eps_img(book_name,arm_name)
+    #     fig,ax = plt.subplots()
+    #     ax.imshow(img)
+    #     return fig,ax
 
     def _line_up_books_by_itself(self,):
         folders = glob.glob(self._experiment_directory+"*")
@@ -105,14 +113,16 @@ class Reduction_Shelf():
             self.take_book(name)
         return 
     
-    def showLVFimage(self,book_name,arm_name,):
-        img = self.get_eps_img(book_name,arm_name,)
-        img_at_lvf = img[10:150,]
-        fig, ax = plt.subplots()
-        im = ax.imshow(img_at_lvf,cmap = 'jet')
-        fig.colorbar(im,ax = ax,shrink=0.2)
-        fig.set_size_inches(8,8)
-        return 
+    # def showLVFimage(self,book_name,arm_name,):
+    #     img = self.get_eps_img(book_name,arm_name,)
+    #     img_at_lvf = img[10:150,]
+    #     fig, ax = plt.subplots()
+    #     im = ax.imshow(img_at_lvf,cmap = 'jet')
+    #     fig.colorbar(im,ax = ax,shrink=0.2)
+    #     fig.set_size_inches(8,8)
+    #     return 
+    
+
 
     def getLVFxy(self,book_name,arm_name,):
         img = self.get_eps_img(book_name,arm_name,)
