@@ -52,8 +52,8 @@ class CF_Class:
         self.waves_lvf, self.eps_lvf = self.get_wv_vs_eps_at_lvf()
         self.waves_spec = ls_irradiance_class.waves
         self.ls_irradiance = ls_irradiance_class.irradiance
-        _,self.ls_irradinance_reduced = self._reduce_by_ND_fiter()
-        self.ls_irradiance_reduced_ip_to_lvf = interpolate.interp1d(self.waves_spec,self.ls_irradinance_reduced,fill_value="extrapolate")(self.waves_lvf)    
+        _,self.ls_irradiance_reduced = self._reduce_by_ND_fiter()
+        self.ls_irradiance_reduced_ip_to_lvf = interpolate.interp1d(self.waves_spec,self.ls_irradiance_reduced,fill_value="extrapolate")(self.waves_lvf)    
         self.cf = self.ls_irradiance_reduced_ip_to_lvf/self.eps_lvf/math.pi * 0.76*1.2
     
     def _reduce_by_ND_fiter(self):
