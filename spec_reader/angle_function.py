@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import math 
 p_sub = pathlib.Path(__file__)
 parent_dir = str(p_sub.parent)
+parent_dir = "."
 
 class BaffleClass:
     def __init__(self, angle_file = "./cosM.csv",angle_base_file = "./cosM.csv",) :
@@ -17,7 +18,9 @@ class BaffleClass:
         self.ratio = np.sum(self.deleta_sense)/np.sum(self.deleta_sense_base)
 
     def _get_baffle_function(self,file):
+
         lib = parent_dir + "/spec_lib/angle_vs_sensitivity/"
+        print(lib)
         full_angle, sensitivity = get_rad_vs_sensitivity_from_csv(lib + file)
         centerIndex = int(len(full_angle)/2)
         left_sensitivity = sensitivity[:centerIndex+1][::-1]

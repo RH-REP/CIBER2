@@ -8,9 +8,10 @@ import math
 
 p_sub = pathlib.Path(__file__)
 parent_dir = str(p_sub.parent)
+parent_dir = '.'
 
 class IrradianceClass:
-    def __init__(self, measuredFiles,bgFiles,baffle,cal_file="/spec_lib/cal/2021-06-29.cal") :
+    def __init__(self, measuredFiles,bgFiles,baffle,cal_file="2021-06-29.cal") :
         self.measuredFiles = measuredFiles
         self.bgFiles = bgFiles
         self.baffle = baffle
@@ -37,8 +38,8 @@ class IrradianceClass:
         return self.waves,self.irradiance 
 
 
-    def _set_cal(self,cal):
-        _,cal = spec_reader.readCalFacFile(parent_dir + '/spec_lib/cal/' + cal)
+    def _set_cal(self,cal_file):
+        _,cal = spec_reader.readCalFacFile(parent_dir + '/spec_lib/cal/' + cal_file)
         self.cal = cal
         # self.waves,self.irradiance = self._calc_wave_and_irradiance()
 
@@ -49,6 +50,7 @@ class CF_Class:
         self.eps_shelf = eps_shelf
         self.waves_lvf, self.eps_lvf = eps_shelf.getLVFxy(OD,arm_name)
         self.ls_irradiance_class = ls_irradiance_class
+        # self.ls_irradiance = 
         self.waves_spec,self.ls_irradinance_reduced = self._reduce_by_ND_fiter()
         self.ls_irradiance_ip = interpolate.interp1d(self.waves_spec,self.ls_irradinance_reduced,fill_value="extrapolate")(self.waves_lvf)    
         self.cf = self.ls_irradiance_ip/self.eps_lvf/math.pi * 0.76*1.2
@@ -84,14 +86,18 @@ class CF_Class:
     # return waves_lvf,cf 
 
     def _reduce_by_ND_fiter(self):
-        file = './lib/filter/'+self.OD+'.csv'
-        rawData_np = spec_reader.csv_to_np(file,isHeaderExist=True)
-        w,transparent = rawData_np.T[0],rawData_np.T[1]
+        w,transparent = self.get_ND()
         irradiance_spec_reduced = self.ls_irradiance_class.irradiance * transparent
         return w,irradiance_spec_reduced
 
+    def get_ND(self):
+        file = './lib/filter/'+self.OD+'.csv'
+        rawData_np = spec_reader.csv_to_np(file,isHeaderExist=True)
+        w,transparent = rawData_np.T[0],rawData_np.T[1]
+        return w,transparent
+
 def get_cf_from_theory():
-    f = parent_dir + '/spec_lib/20210629_cf.csv'
+    f = parent_dir + '/spec_lib/cal/20210629_cf.csv'
     raw = spec_reader.csv_to_np(f,isHeaderExist=True)
     w,ti = raw.T[0],raw.T[1]    
     return w,ti
