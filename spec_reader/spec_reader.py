@@ -22,10 +22,10 @@ def read_data_set(files):
         # sys.exit()
     y_np = np.full((len(files),2048),np.nan)
     for i,f in enumerate(files):
-        t,x,y = read_data(f)
+        integrated_time,x,y = read_data(f)
         y_np[i] = y
     
-    return t,x,np.average(y_np,axis=0)
+    return integrated_time,x,np.average(y_np,axis=0)
 
 def csv_to_np(file,isHeaderExist=False):
     with open(file) as csvfile:
@@ -45,9 +45,8 @@ def read_data(fname):
             data_np[i] = np.array(d.split('\t'),dtype=np.float32)
         x = data_np.T[0]
         y = data_np.T[1]
-        times = np.array(lines[6][24:],dtype=np.float32)
-    times = np.array(lines[6][24:],dtype=np.float32)
-    return times, x, y
+    integrated_time = np.array(lines[6][24:],dtype=np.float32)
+    return integrated_time, x, y
 
 def correctNonlinearity(counts):
     """
@@ -84,6 +83,20 @@ def get_cps(dataFile,od_name):
     count_ave = np.mean(count_np, axis=0)
     cps= count_ave/times
     return cps,wavelength
+
+
+def get_cps_2(dataFiles,bg_files):
+    wavelength = read_data(dataFiles[0])[1]
+    count_np = np.full((len(dataFiles),len(wavelength)),np.nan)
+    for i in range(len(dataFiles)):
+        times,_,count_nocorrect = read_data(dataFiles[i])
+        _,_,count_bg_nocorrect = read_data(bg_files[i])
+        count = correctNonlinearity(count_nocorrect)
+        count_bg = correctNonlinearity(count_bg_nocorrect)
+        count_np[i] = np.array(count) - np.array(count_bg)
+    count_ave = np.mean(count_np, axis=0)
+    cps= count_ave/times
+    return wavelength,cps,
 
 def get_cps_set(dataFile):
     cps_set={}

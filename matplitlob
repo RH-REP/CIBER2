@@ -1,0 +1,1169 @@
+{
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": 1,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "cd /Volumes/ciber2/python/main/calibration"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 2,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import matplotlib.pyplot as plt\n",
+    "import matplotlib\n",
+    "import os\n",
+    "from fits_reader import shelf,fits_reader\n",
+    "import importlib\n",
+    "import glob\n",
+    "import spec_reader\n",
+    "\n",
+    "\n",
+    "importlib.reload(fits_reader)\n",
+    "importlib.reload(spec_reader)\n",
+    "importlib.reload(spec_reader.irradiance)\n",
+    "importlib.reload(spec_reader.angle_function)\n",
+    "importlib.reload(shelf)\n",
+    "\n",
+    "import gc\n",
+    "import math\n",
+    "import sys\n",
+    "import numpy as np"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 3,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import matplotlib.pyplot as plt\n",
+    "import matplotlib\n",
+    "import os\n",
+    "from fits_reader import shelf,fits_reader\n",
+    "import importlib\n",
+    "import glob\n",
+    "import spec_reader\n",
+    "\n",
+    "\n",
+    "importlib.reload(fits_reader)\n",
+    "importlib.reload(spec_reader)\n",
+    "importlib.reload(spec_reader.irradiance)\n",
+    "importlib.reload(spec_reader.angle_function)\n",
+    "importlib.reload(shelf)\n",
+    "\n",
+    "import gc\n",
+    "import math\n",
+    "import sys\n",
+    "import numpy as np"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 4,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "arms = [\"armS\",\"armM\",\"armL\"]\n",
+    "home_directory = os.environ['HOME']\n",
+    "season_name = \"/WSMR2021May/reduction/2021-06-23\"\n",
+    "experiment_name = \"/abs_calib/NIR/\"\n",
+    "experiment_directory = home_directory + season_name + experiment_name\n",
+    "reduction_shelf = shelf.make_reduction_shelf(experiment_directory)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 5,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "reduction_shelf.get_all_books()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 6,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "cf_class = spec_reader.irradiance.NIR_CF_Class(reduction_shelf,1200)\n",
+    "book_name = '①refOD1×②Thermal_cut_M__x_③Blank'"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 7,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "    \n",
+    "waves = np.arange(500,10000,)\n",
+    "irr = spec_reader.irradiance.get_BB_from_planck(waves,1200)\n",
+    "plt.scatter(waves,irr)\n",
+    "# plt.ylim(10**7,10**10)\n",
+    "plt.ylim(10**(-3),10**2)\n",
+    "# plt.xlim(800,1600)\n",
+    "plt.yscale(\"log\")\n",
+    "plt.xlabel(\"wavelenght [nm]\")\n",
+    "plt.ylabel(\"BB radiance [W/m^2/sr/nm]\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 8,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "total_transparent = spec_reader.irradiance.get_filter_conbination(book_name)\n",
+    "print(total_transparent)\n",
+    "waves = np.arange(500,2200,)\n",
+    "plt.scatter(waves,total_transparent)\n",
+    "plt.xlim(800,1600)\n",
+    "# plt.ylim(10**11,10**14)\n",
+    "# plt.yscale(\"log\")\n",
+    "plt.xlabel(\"wavelenght [nm]\")\n",
+    "plt.ylabel(\"transparent\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 9,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "\n",
+    "\n",
+    "waves,ls_irradiance= cf_class.getIrradiance(book_name)\n",
+    "plt.plot(waves,ls_irradiance)\n",
+    "plt.xlim(800,1600)\n",
+    "# plt.ylim(10,10**-)\n",
+    "plt.yscale(\"log\")\n",
+    "plt.xlabel(\"wavelenght [nm]\")\n",
+    "plt.ylabel(\"LS radiance [W/m^2/sr/nm]\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 10,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "arm_name = \"armM\"\n",
+    "book_name = '①refOD1×②Thermal_cut_M__x_③Blank'\n",
+    "\n",
+    "img =  cf_class.get_lvf_img(book_name,arm_name)\n",
+    "plt.imshow(np.fliplr(img))\n",
+    "plt.show()\n",
+    "w,eps= cf_class.get_wv_vs_eps_at_lvf(book_name,arm_name)\n",
+    "plt.plot(w,eps)\n",
+    "plt.xlabel(\"wavelenght [nm]\")\n",
+    "plt.ylabel(\"eps\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 11,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import matplotlib.pyplot as plt\n",
+    "import matplotlib\n",
+    "import os\n",
+    "from fits_reader import shelf,fits_reader\n",
+    "import importlib\n",
+    "import glob\n",
+    "import spec_reader\n",
+    "\n",
+    "\n",
+    "importlib.reload(fits_reader)\n",
+    "importlib.reload(spec_reader)\n",
+    "importlib.reload(spec_reader.irradiance)\n",
+    "importlib.reload(spec_reader.angle_function)\n",
+    "importlib.reload(shelf)\n",
+    "\n",
+    "import gc\n",
+    "import math\n",
+    "import sys\n",
+    "import numpy as np"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 12,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "arms = [\"armS\",\"armM\",\"armL\"]\n",
+    "home_directory = os.environ['HOME']\n",
+    "season_name = \"/WSMR2021May/reduction/2021-06-23\"\n",
+    "experiment_name = \"/abs_calib/NIR/\"\n",
+    "experiment_directory = home_directory + season_name + experiment_name\n",
+    "reduction_shelf = shelf.make_reduction_shelf(experiment_directory)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 13,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "reduction_shelf.get_all_books()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 14,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "cf_class = spec_reader.irradiance.NIR_CF_Class(reduction_shelf,1200)\n",
+    "book_name = '①refOD1×②Thermal_cut_M__x_③Blank'"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 15,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "    \n",
+    "waves = np.arange(500,10000,)\n",
+    "irr = spec_reader.irradiance.get_BB_from_planck(waves,1200)\n",
+    "plt.scatter(waves,irr)\n",
+    "# plt.ylim(10**7,10**10)\n",
+    "plt.ylim(10**(-3),10**2)\n",
+    "# plt.xlim(800,1600)\n",
+    "plt.yscale(\"log\")\n",
+    "plt.xlabel(\"wavelenght [nm]\")\n",
+    "plt.ylabel(\"BB radiance [W/m^2/sr/nm]\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 16,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "total_transparent = spec_reader.irradiance.get_filter_conbination(book_name)\n",
+    "print(total_transparent)\n",
+    "waves = np.arange(500,2200,)\n",
+    "plt.scatter(waves,total_transparent)\n",
+    "plt.xlim(800,1600)\n",
+    "# plt.ylim(10**11,10**14)\n",
+    "# plt.yscale(\"log\")\n",
+    "plt.xlabel(\"wavelenght [nm]\")\n",
+    "plt.ylabel(\"transparent\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 17,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "\n",
+    "\n",
+    "waves,ls_irradiance= cf_class.getIrradiance(book_name)\n",
+    "plt.plot(waves,ls_irradiance)\n",
+    "plt.xlim(800,1600)\n",
+    "# plt.ylim(10,10**-)\n",
+    "plt.yscale(\"log\")\n",
+    "plt.xlabel(\"wavelenght [nm]\")\n",
+    "plt.ylabel(\"LS radiance [W/m^2/sr/nm]\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 18,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "arm_name = \"armM\"\n",
+    "book_name = '①refOD1×②Thermal_cut_M__x_③Blank'\n",
+    "\n",
+    "img =  cf_class.get_lvf_img(book_name,arm_name)\n",
+    "plt.imshow(np.fliplr(img))\n",
+    "plt.show()\n",
+    "w,eps= cf_class.get_wv_vs_eps_at_lvf(book_name,arm_name)\n",
+    "plt.plot(w,eps)\n",
+    "plt.xlabel(\"wavelenght [nm]\")\n",
+    "plt.ylabel(\"eps\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 19,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "arm_name = \"armM\"\n",
+    "book_name = '①refOD1×②Thermal_cut_M__x_③Blank'\n",
+    "\n",
+    "w,cf= cf_class.calc_CF(book_name,arm_name)\n",
+    "\n",
+    "fig,ax = plt.subplots()\n",
+    "ax.plot(w,cf,label=arm_name)\n",
+    "ax.set_xlabel(\"wavelenght [nm]\")\n",
+    "ax.set_ylabel(\"CF\")\n",
+    "ax.set_ylim(10**-10,10**-8)\n",
+    "ax.set_yscale(\"log\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 20,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "book_name = '①refOD1_&_②Thermal_cut_L__x_③Blank_@0mm'\n",
+    "arm_name = \"armL\"\n",
+    "\n",
+    "w,cf= cf_class.calc_CF(book_name,arm_name)\n",
+    "\n",
+    "ax.plot(w,cf,label=arm_name)\n",
+    "ax.set_xlabel(\"wavelenght [nm]\")\n",
+    "ax.set_ylabel(\"CF\")\n",
+    "ax.set_ylim(10**-10,10**-8)\n",
+    "ax.set_yscale(\"log\")\n",
+    "# # ax.plot(w,cf)\n",
+    "# ax.set_xlabel(\"wavelenght [nm]\")\n",
+    "# ax.set_ylabel(\"CF\")\n",
+    "\n",
+    "# ax.set_ylim(10**-10,10**-8)\n",
+    "# ax.set_yscale(\"log\")\n",
+    "display(fig)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 21,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "book_name = '①absOD1_×_②Thermal_cut_S__x_③Blank'\n",
+    "arm_name = \"armS\"\n",
+    "\n",
+    "w,cf= cf_class.calc_CF(book_name,arm_name)\n",
+    "\n",
+    "ax.plot(w,cf,label=arm_name)\n",
+    "ax.set_xlabel(\"wavelenght [nm]\")\n",
+    "ax.set_ylabel(\"CF\")\n",
+    "ax.set_ylim(10**-10,10**-8)\n",
+    "ax.set_yscale(\"log\")\n",
+    "display(fig)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 22,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "\n",
+    "w,cf= spec_reader.irradiance.get_cf_from_theory()\n",
+    "ax.plot(w,cf,label=\"estimate\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 23,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# ax.legend()\n",
+    "display(fig)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 24,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import csv\n",
+    "file_path = \"./lib/sphere_transmittance/Lsphere_relativeT.csv\"\n",
+    "with open(file_path) as csvfile:\n",
+    "        reader = csv.reader(csvfile)\n",
+    "        rawData = [row for row in reader]\n",
+    "# print(rawData)\n",
+    "rawData_np = np.array(rawData,dtype=np.float32)\n",
+    "w = rawData_np.T[0]\n",
+    "t = rawData_np.T[1]\n",
+    "\n",
+    "print(w)\n",
+    "print(t)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 25,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "arm_name = \"armM\"\n",
+    "book_name = '①refOD1×②Thermal_cut_M__x_③Blank'\n",
+    "\n",
+    "img =  cf_class.get_lvf_img(book_name,arm_name)\n",
+    "plt.imshow(np.fliplr(img))\n",
+    "plt.show()\n",
+    "w,eps= cf_class.get_wv_vs_eps_at_lvf(book_name,arm_name)\n",
+    "plt.plot(w,eps)\n",
+    "plt.xlabel(\"wavelenght [nm]\")\n",
+    "plt.ylabel(\"eps\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 26,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "arms = [\"armS\",\"armM\",\"armL\"]\n",
+    "home_directory = os.environ['/Volumes/ciber2/Data']\n",
+    "season_name = \"/WSMR2021May/reduction/2021-06-23\"\n",
+    "experiment_name = \"/abs_calib/NIR/\"\n",
+    "experiment_directory = home_directory + season_name + experiment_name\n",
+    "reduction_shelf = shelf.make_reduction_shelf(experiment_directory)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 27,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "reduction_shelf.get_all_books()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 28,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "arms = [\"armS\",\"armM\",\"armL\"]\n",
+    "\n",
+    "season_name = \"/Volumes/ciber2/Data/WSMR2021May/reduction/2021-06-23\"\n",
+    "experiment_name = \"/abs_calib/NIR/\"\n",
+    "experiment_directory = season_name + experiment_name\n",
+    "reduction_shelf = shelf.make_reduction_shelf(experiment_directory)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 29,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "reduction_shelf.get_all_books()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 30,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "cf_class = spec_reader.irradiance.NIR_CF_Class(reduction_shelf,1200)\n",
+    "book_name = '①refOD1×②Thermal_cut_M__x_③Blank'"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 31,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "    \n",
+    "waves = np.arange(500,10000,)\n",
+    "irr = spec_reader.irradiance.get_BB_from_planck(waves,1200)\n",
+    "plt.scatter(waves,irr)\n",
+    "# plt.ylim(10**7,10**10)\n",
+    "plt.ylim(10**(-3),10**2)\n",
+    "# plt.xlim(800,1600)\n",
+    "plt.yscale(\"log\")\n",
+    "plt.xlabel(\"wavelenght [nm]\")\n",
+    "plt.ylabel(\"BB radiance [W/m^2/sr/nm]\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 32,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "total_transparent = spec_reader.irradiance.get_filter_conbination(book_name)\n",
+    "print(total_transparent)\n",
+    "waves = np.arange(500,2200,)\n",
+    "plt.scatter(waves,total_transparent)\n",
+    "plt.xlim(800,1600)\n",
+    "# plt.ylim(10**11,10**14)\n",
+    "# plt.yscale(\"log\")\n",
+    "plt.xlabel(\"wavelenght [nm]\")\n",
+    "plt.ylabel(\"transparent\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 33,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "\n",
+    "\n",
+    "waves,ls_irradiance= cf_class.getIrradiance(book_name)\n",
+    "plt.plot(waves,ls_irradiance)\n",
+    "plt.xlim(800,1600)\n",
+    "# plt.ylim(10,10**-)\n",
+    "plt.yscale(\"log\")\n",
+    "plt.xlabel(\"wavelenght [nm]\")\n",
+    "plt.ylabel(\"LS radiance [W/m^2/sr/nm]\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 34,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "arm_name = \"armM\"\n",
+    "book_name = '①refOD1×②Thermal_cut_M__x_③Blank'\n",
+    "\n",
+    "img =  cf_class.get_lvf_img(book_name,arm_name)\n",
+    "plt.imshow(np.fliplr(img))\n",
+    "plt.show()\n",
+    "w,eps= cf_class.get_wv_vs_eps_at_lvf(book_name,arm_name)\n",
+    "plt.plot(w,eps)\n",
+    "plt.xlabel(\"wavelenght [nm]\")\n",
+    "plt.ylabel(\"eps\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 35,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "arm_name = \"armM\"\n",
+    "book_name = '①refOD1×②Thermal_cut_M__x_③Blank'\n",
+    "\n",
+    "w,cf= cf_class.calc_CF(book_name,arm_name)\n",
+    "\n",
+    "fig,ax = plt.subplots()\n",
+    "ax.plot(w,cf,label=arm_name)\n",
+    "ax.set_xlabel(\"wavelenght [nm]\")\n",
+    "ax.set_ylabel(\"CF\")\n",
+    "ax.set_ylim(10**-10,10**-8)\n",
+    "ax.set_yscale(\"log\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 36,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "book_name = '①refOD1_&_②Thermal_cut_L__x_③Blank_@0mm'\n",
+    "arm_name = \"armL\"\n",
+    "\n",
+    "w,cf= cf_class.calc_CF(book_name,arm_name)\n",
+    "\n",
+    "ax.plot(w,cf,label=arm_name)\n",
+    "ax.set_xlabel(\"wavelenght [nm]\")\n",
+    "ax.set_ylabel(\"CF\")\n",
+    "ax.set_ylim(10**-10,10**-8)\n",
+    "ax.set_yscale(\"log\")\n",
+    "# # ax.plot(w,cf)\n",
+    "# ax.set_xlabel(\"wavelenght [nm]\")\n",
+    "# ax.set_ylabel(\"CF\")\n",
+    "\n",
+    "# ax.set_ylim(10**-10,10**-8)\n",
+    "# ax.set_yscale(\"log\")\n",
+    "display(fig)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 37,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "arm_name = \"armM\"\n",
+    "book_name = '①refOD1×②Thermal_cut_M__x_③Blank'\n",
+    "\n",
+    "img =  cf_class.get_lvf_img(book_name,arm_name)\n",
+    "plt.imshow(np.fliplr(img))\n",
+    "plt.show()\n",
+    "w,eps= cf_class.get_wv_vs_eps_at_lvf(book_name,arm_name)\n",
+    "plt.plot(w,eps)\n",
+    "plt.xlabel(\"wavelenght [nm]\")\n",
+    "plt.ylabel(\"eps\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 38,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "arm_name = \"armM\"\n",
+    "book_name = '①refOD1×②Thermal_cut_M__x_③Blank'\n",
+    "\n",
+    "w,cf= cf_class.calc_CF(book_name,arm_name)\n",
+    "\n",
+    "fig,ax = plt.subplots()\n",
+    "ax.plot(w,cf,label=arm_name)\n",
+    "ax.set_xlabel(\"wavelenght [nm]\")\n",
+    "ax.set_ylabel(\"CF\")\n",
+    "ax.set_ylim(10**-10,10**-8)\n",
+    "ax.set_yscale(\"log\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 39,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "book_name = '①refOD1_&_②Thermal_cut_L__x_③Blank_@0mm'\n",
+    "arm_name = \"armL\"\n",
+    "\n",
+    "w,cf= cf_class.calc_CF(book_name,arm_name)\n",
+    "\n",
+    "ax.plot(w,cf,label=arm_name)\n",
+    "ax.set_xlabel(\"wavelenght [nm]\")\n",
+    "ax.set_ylabel(\"CF\")\n",
+    "ax.set_ylim(10**-10,10**-8)\n",
+    "ax.set_yscale(\"log\")\n",
+    "# # ax.plot(w,cf)\n",
+    "# ax.set_xlabel(\"wavelenght [nm]\")\n",
+    "# ax.set_ylabel(\"CF\")\n",
+    "\n",
+    "# ax.set_ylim(10**-10,10**-8)\n",
+    "# ax.set_yscale(\"log\")\n",
+    "display(fig)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 40,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "w"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 41,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "arm_name = \"armM\"\n",
+    "book_name = '①refOD1×②Thermal_cut_M__x_③Blank'\n",
+    "\n",
+    "w,cf= cf_class.calc_CF(book_name,arm_name)\n",
+    "\n",
+    "fig,ax = plt.subplots()\n",
+    "ax.plot(w[np.where((w>900)&(w<1450))],cf[np.where((w>900)&(w<1450))],label=arm_name)\n",
+    "ax.set_xlabel(\"wavelenght [nm]\")\n",
+    "ax.set_ylabel(\"CF\")\n",
+    "ax.set_ylim(10**-10,10**-8)\n",
+    "ax.set_yscale(\"log\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 42,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "book_name = '①refOD1_&_②Thermal_cut_L__x_③Blank_@0mm'\n",
+    "arm_name = \"armL\"\n",
+    "\n",
+    "w,cf= cf_class.calc_CF(book_name,arm_name)\n",
+    "\n",
+    "ax.plot(w,cf,label=arm_name)\n",
+    "ax.set_xlabel(\"wavelenght [nm]\")\n",
+    "ax.set_ylabel(\"CF\")\n",
+    "ax.set_ylim(10**-10,10**-8)\n",
+    "ax.set_yscale(\"log\")\n",
+    "# # ax.plot(w,cf)\n",
+    "# ax.set_xlabel(\"wavelenght [nm]\")\n",
+    "# ax.set_ylabel(\"CF\")\n",
+    "\n",
+    "# ax.set_ylim(10**-10,10**-8)\n",
+    "# ax.set_yscale(\"log\")\n",
+    "display(fig)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 43,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "book_name = '①refOD1_&_②Thermal_cut_L__x_③Blank_@0mm'\n",
+    "arm_name = \"armL\"\n",
+    "\n",
+    "w,cf= cf_class.calc_CF(book_name,arm_name)\n",
+    "\n",
+    "ax.plot(w[np.where((w>1400)&(w<2050))],cf[np.where((w>1400)&(w<2050))],label=arm_name)\n",
+    "ax.set_xlabel(\"wavelenght [nm]\")\n",
+    "ax.set_ylabel(\"CF\")\n",
+    "ax.set_ylim(10**-10,10**-8)\n",
+    "ax.set_yscale(\"log\")\n",
+    "# # ax.plot(w,cf)\n",
+    "# ax.set_xlabel(\"wavelenght [nm]\")\n",
+    "# ax.set_ylabel(\"CF\")\n",
+    "\n",
+    "# ax.set_ylim(10**-10,10**-8)\n",
+    "# ax.set_yscale(\"log\")\n",
+    "display(fig)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 44,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "book_name = '①refOD1_&_②Thermal_cut_L__x_③Blank_@0mm'\n",
+    "arm_name = \"armL\"\n",
+    "\n",
+    "w,cf= cf_class.calc_CF(book_name,arm_name)\n",
+    "\n",
+    "ax.plot(w[np.where((w>1400)&(w<2050))],cf[np.where((w>1400)&(w<2050))],label=arm_name)\n",
+    "ax.set_xlabel(\"wavelenght [nm]\")\n",
+    "ax.set_ylabel(\"CF\")\n",
+    "ax.set_ylim(10**-10,10**-8)\n",
+    "ax.set_yscale(\"log\")\n",
+    "# # ax.plot(w,cf)\n",
+    "# ax.set_xlabel(\"wavelenght [nm]\")\n",
+    "# ax.set_ylabel(\"CF\")\n",
+    "\n",
+    "# ax.set_ylim(10**-10,10**-8)\n",
+    "# ax.set_yscale(\"log\")\n",
+    "display(fig)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 45,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "arm_name = \"armM\"\n",
+    "book_name = '①refOD1×②Thermal_cut_M__x_③Blank'\n",
+    "\n",
+    "w,cf= cf_class.calc_CF(book_name,arm_name)\n",
+    "\n",
+    "fig,ax = plt.subplots()\n",
+    "ax.plot(w[np.where((w>900)&(w<1450))],cf[np.where((w>900)&(w<1450))],label=arm_name)\n",
+    "ax.set_xlabel(\"wavelenght [nm]\")\n",
+    "ax.set_ylabel(\"CF\")\n",
+    "ax.set_ylim(10**-10,10**-8)\n",
+    "ax.set_yscale(\"log\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 46,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "book_name = '①refOD1_&_②Thermal_cut_L__x_③Blank_@0mm'\n",
+    "arm_name = \"armL\"\n",
+    "\n",
+    "w,cf= cf_class.calc_CF(book_name,arm_name)\n",
+    "\n",
+    "ax.plot(w[np.where((w>1400)&(w<2050))],cf[np.where((w>1400)&(w<2050))],label=arm_name)\n",
+    "ax.set_xlabel(\"wavelenght [nm]\")\n",
+    "ax.set_ylabel(\"CF\")\n",
+    "ax.set_ylim(10**-10,10**-8)\n",
+    "ax.set_yscale(\"log\")\n",
+    "# # ax.plot(w,cf)\n",
+    "# ax.set_xlabel(\"wavelenght [nm]\")\n",
+    "# ax.set_ylabel(\"CF\")\n",
+    "\n",
+    "# ax.set_ylim(10**-10,10**-8)\n",
+    "# ax.set_yscale(\"log\")\n",
+    "display(fig)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 47,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "book_name = '①absOD1_×_②Thermal_cut_S__x_③Blank'\n",
+    "arm_name = \"armS\"\n",
+    "\n",
+    "w,cf= cf_class.calc_CF(book_name,arm_name)\n",
+    "\n",
+    "ax.plot(w,cf,label=arm_name)\n",
+    "ax.set_xlabel(\"wavelenght [nm]\")\n",
+    "ax.set_ylabel(\"CF\")\n",
+    "ax.set_ylim(10**-10,10**-8)\n",
+    "ax.set_yscale(\"log\")\n",
+    "display(fig)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 48,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "book_name = '①absOD1_×_②Thermal_cut_S__x_③Blank'\n",
+    "arm_name = \"armS\"\n",
+    "\n",
+    "w,cf= cf_class.calc_CF(book_name,arm_name)\n",
+    "\n",
+    "ax.plot(w[np.where((w>600)&(w<2050))],cf[np.where((w>600)&(w<2050))],label=arm_name)\n",
+    "ax.set_xlabel(\"wavelenght [nm]\")\n",
+    "ax.set_ylabel(\"CF\")\n",
+    "ax.set_ylim(10**-10,10**-8)\n",
+    "ax.set_yscale(\"log\")\n",
+    "display(fig)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 49,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "book_name = '①absOD1_×_②Thermal_cut_S__x_③Blank'\n",
+    "arm_name = \"armS\"\n",
+    "\n",
+    "w,cf= cf_class.calc_CF(book_name,arm_name)\n",
+    "\n",
+    "ax.plot(w[np.where((w>600)&(w<850))],cf[np.where((w>600)&(w<850))],label=arm_name)\n",
+    "ax.set_xlabel(\"wavelenght [nm]\")\n",
+    "ax.set_ylabel(\"CF\")\n",
+    "ax.set_ylim(10**-10,10**-8)\n",
+    "ax.set_yscale(\"log\")\n",
+    "display(fig)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 50,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "book_name = '①absOD1_×_②Thermal_cut_S__x_③Blank'\n",
+    "arm_name = \"armS\"\n",
+    "\n",
+    "w,cf= cf_class.calc_CF(book_name,arm_name)\n",
+    "\n",
+    "ax.plot(w[np.where((w>600)&(w<900))],cf[np.where((w>600)&(w<900))],label=arm_name)\n",
+    "ax.set_xlabel(\"wavelenght [nm]\")\n",
+    "ax.set_ylabel(\"CF\")\n",
+    "ax.set_ylim(10**-10,10**-8)\n",
+    "ax.set_yscale(\"log\")\n",
+    "display(fig)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 51,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "arm_name = \"armM\"\n",
+    "book_name = '①refOD1×②Thermal_cut_M__x_③Blank'\n",
+    "\n",
+    "w,cf= cf_class.calc_CF(book_name,arm_name)\n",
+    "\n",
+    "fig,ax = plt.subplots()\n",
+    "ax.plot(w[np.where((w>900)&(w<1450))],cf[np.where((w>900)&(w<1450))],label=arm_name)\n",
+    "ax.set_xlabel(\"wavelenght [nm]\")\n",
+    "ax.set_ylabel(\"CF\")\n",
+    "ax.set_ylim(10**-10,10**-8)\n",
+    "ax.set_yscale(\"log\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 52,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "book_name = '①refOD1_&_②Thermal_cut_L__x_③Blank_@0mm'\n",
+    "arm_name = \"armL\"\n",
+    "\n",
+    "w,cf= cf_class.calc_CF(book_name,arm_name)\n",
+    "\n",
+    "ax.plot(w[np.where((w>1400)&(w<2050))],cf[np.where((w>1400)&(w<2050))],label=arm_name)\n",
+    "ax.set_xlabel(\"wavelenght [nm]\")\n",
+    "ax.set_ylabel(\"CF\")\n",
+    "ax.set_ylim(10**-10,10**-8)\n",
+    "ax.set_yscale(\"log\")\n",
+    "# # ax.plot(w,cf)\n",
+    "# ax.set_xlabel(\"wavelenght [nm]\")\n",
+    "# ax.set_ylabel(\"CF\")\n",
+    "\n",
+    "# ax.set_ylim(10**-10,10**-8)\n",
+    "# ax.set_yscale(\"log\")\n",
+    "display(fig)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 53,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "book_name = '①absOD1_×_②Thermal_cut_S__x_③Blank'\n",
+    "arm_name = \"armS\"\n",
+    "\n",
+    "w,cf= cf_class.calc_CF(book_name,arm_name)\n",
+    "\n",
+    "ax.plot(w[np.where((w>600)&(w<900))],cf[np.where((w>600)&(w<900))],label=arm_name)\n",
+    "ax.set_xlabel(\"wavelenght [nm]\")\n",
+    "ax.set_ylabel(\"CF\")\n",
+    "ax.set_ylim(10**-10,10**-8)\n",
+    "ax.set_yscale(\"log\")\n",
+    "display(fig)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 54,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "book_name = '①absOD1_×_②Thermal_cut_S__x_③Blank'\n",
+    "arm_name = \"armS\"\n",
+    "\n",
+    "w,cf= cf_class.calc_CF(book_name,arm_name)\n",
+    "\n",
+    "ax.plot(w[np.where((w>600)&(w<950))],cf[np.where((w>600)&(w<950))],label=arm_name)\n",
+    "ax.set_xlabel(\"wavelenght [nm]\")\n",
+    "ax.set_ylabel(\"CF\")\n",
+    "ax.set_ylim(10**-10,10**-8)\n",
+    "ax.set_yscale(\"log\")\n",
+    "display(fig)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 55,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "book_name = '①absOD1_×_②Thermal_cut_S__x_③Blank'\n",
+    "arm_name = \"armS\"\n",
+    "\n",
+    "w,cf= cf_class.calc_CF(book_name,arm_name)\n",
+    "\n",
+    "ax.plot(w[np.where((w>600)&(w<920))],cf[np.where((w>600)&(w<920))],label=arm_name)\n",
+    "ax.set_xlabel(\"wavelenght [nm]\")\n",
+    "ax.set_ylabel(\"CF\")\n",
+    "ax.set_ylim(10**-10,10**-8)\n",
+    "ax.set_yscale(\"log\")\n",
+    "display(fig)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 56,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "arm_name = \"armM\"\n",
+    "book_name = '①refOD1×②Thermal_cut_M__x_③Blank'\n",
+    "\n",
+    "w,cf= cf_class.calc_CF(book_name,arm_name)\n",
+    "\n",
+    "fig,ax = plt.subplots()\n",
+    "ax.plot(w[np.where((w>900)&(w<1450))],cf[np.where((w>900)&(w<1450))],label=arm_name)\n",
+    "ax.set_xlabel(\"wavelenght [nm]\")\n",
+    "ax.set_ylabel(\"CF\")\n",
+    "ax.set_ylim(10**-10,10**-8)\n",
+    "ax.set_yscale(\"log\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 57,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "book_name = '①refOD1_&_②Thermal_cut_L__x_③Blank_@0mm'\n",
+    "arm_name = \"armL\"\n",
+    "\n",
+    "w,cf= cf_class.calc_CF(book_name,arm_name)\n",
+    "\n",
+    "ax.plot(w[np.where((w>1400)&(w<2050))],cf[np.where((w>1400)&(w<2050))],label=arm_name)\n",
+    "ax.set_xlabel(\"wavelenght [nm]\")\n",
+    "ax.set_ylabel(\"CF\")\n",
+    "ax.set_ylim(10**-10,10**-8)\n",
+    "ax.set_yscale(\"log\")\n",
+    "# # ax.plot(w,cf)\n",
+    "# ax.set_xlabel(\"wavelenght [nm]\")\n",
+    "# ax.set_ylabel(\"CF\")\n",
+    "\n",
+    "# ax.set_ylim(10**-10,10**-8)\n",
+    "# ax.set_yscale(\"log\")\n",
+    "display(fig)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 58,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "book_name = '①absOD1_×_②Thermal_cut_S__x_③Blank'\n",
+    "arm_name = \"armS\"\n",
+    "\n",
+    "w,cf= cf_class.calc_CF(book_name,arm_name)\n",
+    "\n",
+    "ax.plot(w[np.where((w>600)&(w<920))],cf[np.where((w>600)&(w<920))],label=arm_name)\n",
+    "ax.set_xlabel(\"wavelenght [nm]\")\n",
+    "ax.set_ylabel(\"CF\")\n",
+    "ax.set_ylim(10**-10,10**-8)\n",
+    "ax.set_yscale(\"log\")\n",
+    "display(fig)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 59,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "book_name = '①absOD1_×_②Thermal_cut_S__x_③Blank'\n",
+    "arm_name = \"armS\"\n",
+    "\n",
+    "w,cf= cf_class.calc_CF(book_name,arm_name)\n",
+    "\n",
+    "ax.plot(w[np.where((w>600)&(w<910))],cf[np.where((w>600)&(w<910))],label=arm_name)\n",
+    "ax.set_xlabel(\"wavelenght [nm]\")\n",
+    "ax.set_ylabel(\"CF\")\n",
+    "ax.set_ylim(10**-10,10**-8)\n",
+    "ax.set_yscale(\"log\")\n",
+    "display(fig)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 60,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "arm_name = \"armM\"\n",
+    "book_name = '①refOD1×②Thermal_cut_M__x_③Blank'\n",
+    "\n",
+    "w,cf= cf_class.calc_CF(book_name,arm_name)\n",
+    "\n",
+    "fig,ax = plt.subplots()\n",
+    "ax.plot(w[np.where((w>900)&(w<1450))],cf[np.where((w>900)&(w<1450))],label=arm_name)\n",
+    "ax.set_xlabel(\"wavelenght [nm]\")\n",
+    "ax.set_ylabel(\"CF\")\n",
+    "ax.set_ylim(10**-10,10**-8)\n",
+    "ax.set_yscale(\"log\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 61,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "book_name = '①refOD1_&_②Thermal_cut_L__x_③Blank_@0mm'\n",
+    "arm_name = \"armL\"\n",
+    "\n",
+    "w,cf= cf_class.calc_CF(book_name,arm_name)\n",
+    "\n",
+    "ax.plot(w[np.where((w>1400)&(w<2050))],cf[np.where((w>1400)&(w<2050))],label=arm_name)\n",
+    "ax.set_xlabel(\"wavelenght [nm]\")\n",
+    "ax.set_ylabel(\"CF\")\n",
+    "ax.set_ylim(10**-10,10**-8)\n",
+    "ax.set_yscale(\"log\")\n",
+    "# # ax.plot(w,cf)\n",
+    "# ax.set_xlabel(\"wavelenght [nm]\")\n",
+    "# ax.set_ylabel(\"CF\")\n",
+    "\n",
+    "# ax.set_ylim(10**-10,10**-8)\n",
+    "# ax.set_yscale(\"log\")\n",
+    "display(fig)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 62,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "book_name = '①absOD1_×_②Thermal_cut_S__x_③Blank'\n",
+    "arm_name = \"armS\"\n",
+    "\n",
+    "w,cf= cf_class.calc_CF(book_name,arm_name)\n",
+    "\n",
+    "ax.plot(w[np.where((w>600)&(w<910))],cf[np.where((w>600)&(w<910))],label=arm_name)\n",
+    "ax.set_xlabel(\"wavelenght [nm]\")\n",
+    "ax.set_ylabel(\"CF\")\n",
+    "ax.set_ylim(10**-10,10**-8)\n",
+    "ax.set_yscale(\"log\")\n",
+    "display(fig)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 63,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "\n",
+    "w,cf= spec_reader.irradiance.get_cf_from_theory()\n",
+    "ax.plot(w,cf,label=\"estimate\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 64,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# ax.legend()\n",
+    "display(fig)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 65,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# ax.legend()\n",
+    "%jupiter matplitlob\n",
+    "display(fig)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 66,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# ax.legend()\n",
+    "%notebook matplitlob\n",
+    "display(fig)"
+   ]
+  }
+ ],
+ "metadata": {},
+ "nbformat": 4,
+ "nbformat_minor": 2
+}

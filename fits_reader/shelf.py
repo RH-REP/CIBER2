@@ -1,3 +1,4 @@
+from cmath import sqrt
 import openpyxl 
 import glob
 import sys
@@ -47,7 +48,14 @@ def make_reduction_shelf(experiment_directory,):
     
 
 def make_ramp_shelf(experiment_directory,):
-    return   Ramp_Shelf(experiment_directory)
+    return Ramp_Shelf(experiment_directory)
+
+def make_img_shelf(name,imgs,):
+    return Image_Shelf(name,imgs)
+
+
+# def make_line_shelf(name,x,ys,):
+#     return Line_Shelf(name,x,ys)
 
 
 class Reduction_Shelf():
@@ -66,39 +74,81 @@ class Reduction_Shelf():
             ds.append(d)
         return ds
     
-    def _get_eps_files(self,book_name,arm_name):
-        eps_files = glob.glob(self._experiment_directory + book_name + "/" + ch_dict[arm_name]+"/*[0-9].fts")
-        eps_bg_files = glob.glob(self._experiment_directory + book_name + "/" + ch_dict[arm_name]+"/*bg.fts")
+    def get_eps_files(self,book_name,arm_name):
+        eps_files = glob.glob(self._experiment_directory + book_name + "/" + ch_dict[arm_name]+"/*[0-9].f*ts")
+        eps_files = sorted(eps_files,)
+        eps_bg_files = glob.glob(self._experiment_directory + book_name + "/" + ch_dict[arm_name]+"/*bg.f*ts")
+        eps_bg_files = sorted(eps_bg_files,)
         
         return eps_files, eps_bg_files
 
-    def _cal_img_mean(self,files):
+    def _read_imgs(self,files):
         imgs = np.full((len(files),2048,2048),np.nan)
         for i,f in enumerate(files):
             fits,_ = fits_reader.loadFits(f)
             imgs[i] = fits[0]
             
-        img = np.nanmean(imgs,axis=0)
-        del imgs
-        return img
+        return imgs
     
     def get_eps_img(self,book_name,arm_name,):
         """
         return img only
         """
-        files ,bg_files=self._get_eps_files(book_name,arm_name)
-        img = self._cal_img_mean(files)
+        files ,bg_files=self.get_eps_files(book_name,arm_name)
+        # print(files)
+        imgs = self._read_imgs(files)
+        img = np.nanmean(imgs,axis=0)
+
         if not(len(bg_files) ==0):
-            bg_img = self._cal_img_mean(bg_files)
+            bg_imgs = self._read_imgs(bg_files)
+            bg_img = np.nanmean(bg_imgs,axis=0)
+
             img = img - bg_img
         else:
             print("bg is empty")
         return img
 
-    def get_LVF_img(self,book_name,arm_name,):
-        img = self.get_eps_img(book_name,arm_name,)
-        img_at_lvf = img[10:150,]
-        return img_at_lvf 
+
+    def get_eps_imgs(self,book_name,arm_name,):
+        """
+        return img only
+        """
+        files ,bg_files=self.get_eps_files(book_name,arm_name)
+        # print(files)
+        imgs = self._read_imgs(files)
+        return imgs
+
+    def get_eps_imgs_sub_background(self,book_name,arm_name,):
+        """
+        return img only
+        """
+        files ,bg_files=self.get_eps_files(book_name,arm_name)
+        # print(files)
+        imgs = self._read_imgs(files)
+        # img = np.nanmean(imgs,axis=0)
+
+        if not(len(bg_files) ==0):
+            bg_imgs = self._read_imgs(bg_files)
+            # bg_img = np.nanmean(bg_imgs,axis=0)
+
+            # img = img - bg_img
+            imgs = imgs - bg_imgs
+
+        else:
+            print("bg is empty")
+        return imgs
+
+
+
+    # def get_lvf_img(self,book_name,arm_name,):
+    #     img = self.get_eps_img(book_name,arm_name,)
+    #     img_at_lvf = img[10:150,]
+    #     return img_at_lvf 
+
+    def get_lvf_imgs(self,book_name,arm_name,):
+        imgs = self.get_eps_imgs_sub_background(book_name,arm_name,)
+        img_at_lvf_s = imgs[:,10:150]
+        return img_at_lvf_s
 
     # def show_eps_image(self,book_name,arm_name):
     #     img = self.get_eps_img(book_name,arm_name)
@@ -121,16 +171,118 @@ class Reduction_Shelf():
     #     fig.colorbar(im,ax = ax,shrink=0.2)
     #     fig.set_size_inches(8,8)
     #     return 
+
+    def getLowPixelVSIntensity(self,imgs,startPix=10,endPix=150):
+        """
+        default is LVF area
+        """
+        cropped_image_averages = []
+        # print(imgs)
+        for i,img in enumerate(imgs):
+            cropped_image = img[startPix:endPix,]
+            pixel = np.arange(len(img[0]))        
+            cropped_image_average = np.nanmean(cropped_image,axis = 0)
+            cropped_image_averages.append(cropped_image_average)
+        return pixel,np.array(cropped_image_averages)
+
     
 
-
     def getLVFxy(self,book_name,arm_name,):
-        img = self.get_eps_img(book_name,arm_name,)
-        img_at_lvf = img[10:150,]
-        pixel = np.arange(len(img[0]))
-        x_lvf = convert_pixel_to_lvf(pixel,arm_name)
-        y_lvf = np.nanmean(img_at_lvf,axis = 0)
+        imgs = self.get_eps_imgs_sub_background(book_name,arm_name)
+        x_lvf_pix,y_lvf_s = self.getLowPixelVSIntensity(imgs)
+        y_lvf = np.nanmean(y_lvf_s,axis = 0)
+        x_lvf = convert_pixel_to_lvf(x_lvf_pix,arm_name)
         return x_lvf,y_lvf
+
+    def getLVF_with_sterr(self,book_name,arm_name,):
+        imgs = self.get_eps_imgs_sub_background(book_name,arm_name)
+        x_lvf_pix,y_lvf_s = self.getLowPixelVSIntensity(imgs)
+        y_lvf = np.nanmean(y_lvf_s,axis = 0)
+        y_sterr = np.std(y_lvf_s,axis = 0)/np.sqrt(len(y_lvf_s))
+        # print(y_lvf.T[1000])
+        # print(len(y_lvf_s))
+
+        x_lvf = convert_pixel_to_lvf(x_lvf_pix,arm_name)
+
+        return x_lvf,y_lvf,y_sterr
+
+
+
+
+
+    # def getLVFxy_for_each(self,book_name,arm_name,):
+    #     imgs = self.get_eps_imgs(book_name,arm_name,)
+    #     img_at_lvf_s = imgs[:,10:150,]
+    #     pixel = np.arange(len(imgs[0][0]))
+    #     x_lvf = convert_pixel_to_lvf(pixel,arm_name)
+    #     return x_lvf,img_at_lvf_s
+
+class Image_Shelf():
+
+    def __init__(self,name,imgs):
+        self.imgs = imgs
+        self.names = name
+
+        return
+        
+    def convert_volt_to_eps(self):
+        for i,img in enumerate(self.imgs):
+            self.imgs[i] = img * (4*10**(-6))
+
+    def star_clip(self,threshould):
+        for i,img in enumerate(self.imgs):
+
+            img = np.where(img < threshould, img , np.nan)
+            img = np.where(img > -threshould, img , np.nan)
+            self.imgs[i]  = img
+
+    def substract_bg(self):
+        for i,img in enumerate(self.imgs):
+            img = img - np.nanmean(img[:,10:100])
+            self.imgs[i]  = img
+
+
+    def substract_line_noise(self):
+        for i,img in enumerate(self.imgs):
+            line_noise = np.nanmean(img[:,0:4],axis=1) 
+            # line_noise = np.nanmean(img[:,0:4]+img[:,-5:-1],axis=1) 
+            v = np.array([1/4, 1/4, 1/4, 1/4, 1/4])
+            line_noise_smooth = np.convolve(line_noise, v, mode ="valid")
+            a = line_noise_smooth[0]
+            b = line_noise_smooth[-1]
+            line_noise_smooth =  np.insert(line_noise_smooth,0,([a,a]))
+            line_noise_smooth =  np.insert(line_noise_smooth,-1,([b,b]))
+
+            img = img - line_noise_smooth
+            self.imgs[i]  = img
+
+    def getLowPixelVSIntensity(self,startPix,endPix):
+        cropped_image_averages = []
+        for i,img in enumerate(self.imgs):
+            cropped_image = img[startPix:endPix,]
+            pixel = np.arange(len(img[0]))        
+            cropped_image_average = np.nanmean(cropped_image,axis = 0)
+            cropped_image_averages.append(cropped_image_average)
+        return pixel,np.array(cropped_image_averages)
+
+
+    def cut_out_square(self,x_startPix,x_endPix,y_startPix,y_endPix):
+        cropped_images = []
+        for i,img in enumerate(self.imgs):
+            cropped_images.append(img[x_startPix:x_endPix,y_startPix:y_endPix])
+        return np.array(cropped_images)
+
+# class Line_Shelf():
+
+#     def __init__(self,name,x,ys):
+#         self.names = name
+#         self.x = x
+#         self.ys = ys
+#         return
+
+#     def getAverages(self,startPix,endPix):
+
+#         pixel,img_averages = self.getLowPixelVSIntensity(startPix,endPix)
 
 class Ramp_Shelf():
     def __init__(self,experiment_directory):
@@ -241,16 +393,17 @@ class Ramp_Shelf():
             ax.legend()
     
 
-    def make_flight_sequence_graph(self,book_name,arm_name,):
+    def make_flight_sequence_graph(self,book_name,arm_name,isBg = False,):
         fig, ax  = plt.subplots()
-        working_directory = self._get_working_directory(book_name,arm_name)
+        working_directory = self._get_working_directory(book_name,arm_name,isBg=isBg)
         times_np = np.array([])
         last_time = fits_reader.convertWorkingdirectoryToSecond(working_directory)
         print("start time ,",last_time)
         average_counts_of_area_np = np.array([])
 
         for f in working_directory:
-            times, average_counts_of_area,_ =self.calc_ramp_data(f,arm_name,)
+            # times, average_counts_of_area, _ = self.calc_ramp_data(f,arm_name,)
+            times, average_counts_of_area, = self.calc_ramp_data(f,arm_name,)
             times_np = np.append(times_np,times+last_time)
             last_time = times_np[-1]
             average_counts_of_area_np = np.append(average_counts_of_area_np,average_counts_of_area)
@@ -271,6 +424,7 @@ class Ramp_Shelf():
         ax.set_xlim(0,)
         ax.set_ylim(0,)
         return fig, ax
+
 
     # @profile
     def make_ramp_map(self,book_name,arm_name,isBg = False):
@@ -406,7 +560,7 @@ class Ramp_Shelf():
         area_average_set_error = np.arange(data_length)
         for i,data in enumerate(data_image_minus_reset):
            area_average_set[i],area_average_set_error[i] = np.nanmean(data[cut_area.ys:cut_area.ye,cut_area.xs:cut_area.xe]),np.nanstd(data[cut_area.ys:cut_area.ye,cut_area.xs:cut_area.xe])
-        return times,area_average_set,area_average_set_error,slope
+        return times,area_average_set,#area_average_set_error,slope
 
 
 # """
