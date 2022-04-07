@@ -158,17 +158,17 @@ def calc_ls_radiance(book_name,kelvin):
     W/m^2/sr/nm
     """
     waves = np.arange(500,2200,)
-    radiance_from_plank=get_BB_from_planck(waves,kelvin)
+    irradiance_from_plank=get_BB_from_planck(waves,kelvin)
     pinholesize = (1.732/2)**2*np.pi
     solid_angle = np.pi*(25.4/2/67.1)**2
     filter_transmittance = get_filter_conbination(book_name)
-    ls_total_power_in = radiance_from_plank*pinholesize*solid_angle*filter_transmittance
+    ls_radiance_in = irradiance_from_plank*pinholesize*solid_angle*filter_transmittance
     ls_aperture_size = (330/2)**2*np.pi
     # ls_transparent = 0.4
-    ls_transparent = get_ls_transparent()
+    ls_transparent = get_ls_transparent() * 0.4
     window_transparent = (0.95)**6
     loading = 1.2
-    ls_radiance_out = ls_total_power_in/ls_aperture_size/np.pi*ls_transparent*window_transparent*loading
+    ls_radiance_out = ls_radiance_in/ls_aperture_size/np.pi*ls_transparent*window_transparent*loading
 
     return waves,ls_radiance_out
 
@@ -188,6 +188,7 @@ def get_filter_conbination(book_name):
 def get_filter_transmittance(filtername, filter_path = './lib/NIR_filter/20210716_filter_transmittance.csv'):
     with open(filter_path) as csvfile:
         reader = csv.reader(csvfile)
+    #     header = reader
         rawData = [row for row in reader]
     # print(header/)
     header = rawData[0]
@@ -214,10 +215,7 @@ def get_ls_transparent(file_path = "./lib/sphere_transmittance/Lsphere_relativeT
     transparent = rawData_np.T[1]
     waves = np.arange(500,2200,)
     transparent_ip = interpolate.interp1d(w,transparent,fill_value="extrapolate")(waves)
-    x_01 = np.array([500,1500])
-    y_01 = np.array([0.4,0.25])
-    measured_transaprent_correct= interpolate.interp1d(x_01,y_01,fill_value="extrapolate")(waves)
-    return transparent_ip * measured_transaprent_correct
+    return transparent_ip
 
 
 # class NIR_CF_Class:
