@@ -159,20 +159,19 @@ def calc_ls_radiance(book_name,kelvin):
     """
     waves = np.arange(500,2200,)
     radiance_from_plank=get_BB_from_planck(waves,kelvin)
-    pinholesize = (1.732/2)**2*np.pi
+    pin_hole_size = (1.732/2)**2*np.pi
     solid_angle = np.pi*(25.4/2/67.1)**2
-    filter_transmittance = get_filter_conbination(book_name)
-    ls_total_power_in = radiance_from_plank*pinholesize*solid_angle*filter_transmittance
+    _,filter_transmittance = get_transparent_from_filter_conbination(book_name)
+    ls_total_power_in = radiance_from_plank*pin_hole_size*solid_angle*filter_transmittance
     ls_aperture_size = (330/2)**2*np.pi
-    # ls_transparent = 0.4
     ls_transparent = get_ls_transparent()
-    window_transparent = (0.95)**6
+    window_transparent = (0.98)**6
     loading = 1.2
     ls_radiance_out = ls_total_power_in/ls_aperture_size/np.pi*ls_transparent*window_transparent*loading
 
     return waves,ls_radiance_out
 
-def get_filter_conbination(book_name):
+def get_transparent_from_filter_conbination(book_name):
     filt1_name = book_name.split("①")[1].split("②")[0]
     filt2_name = book_name.split("②")[1].split("③")[0]
     filt3_name = book_name.split("③")[1]
@@ -183,7 +182,7 @@ def get_filter_conbination(book_name):
     total_trans_parent = filt1_trans * filt2_trans * filt3_trans
     waves = np.arange(500,2200,)
     total_trans_parent_ip = interpolate.interp1d(w,total_trans_parent,fill_value="extrapolate")(waves)
-    return total_trans_parent_ip
+    return waves,total_trans_parent_ip
 
 def get_filter_transmittance(filtername, filter_path = './lib/NIR_filter/20210716_filter_transmittance.csv'):
     with open(filter_path) as csvfile:
@@ -204,14 +203,20 @@ def get_filter_transmittance(filtername, filter_path = './lib/NIR_filter/2021071
     return w,filter_np
 
 def get_ls_transparent(file_path = "./lib/sphere_transmittance/Lsphere_relativeT.csv"):
+# def get_ls_transparent(file_path = "./lib/sphere_transmittance/LS_transmittance_cal_by_Scattering_98.csv"):
     # file_path = "./lib/sphere_transmittance/Lsphere_relativeT.csv"
-    with open(file_path) as csvfile:
-            reader = csv.reader(csvfile)
-            rawData = [row for row in reader]
+    # with open(file_path) as csvfile:
+    #         reader = csv.reader(csvfile)
+    #         rawData = [row for row in reader]
+
+    df = pd.read_csv(file_path)
+
     # print(rawData)
-    rawData_np = np.array(rawData,dtype=np.float32)
-    w = rawData_np.T[0]
-    transparent = rawData_np.T[1]
+    # rawData_np = np.array(rawData,dtype=np.float32)
+    # w = rawData_np.T[0]
+    # transparent = rawData_np.T[1]
+    w = df["wavelength"]
+    transparent = df["transparent"]
     waves = np.arange(500,2200,)
     transparent_ip = interpolate.interp1d(w,transparent,fill_value="extrapolate")(waves)
     x_01 = np.array([500,1500])
@@ -287,14 +292,14 @@ def get_irradeiance(waves,measured_counts,integratedTime,cf):
 def get_BB_from_planck(waves, T):
     """
     input waves as nano
-    return irradiance(W/m^2/nm)
+    return irradiance(W/m^2/nm/sr)
     """
     waves = waves *10**-9
     h = 6.6260693 * 10 ** -34
     k = 1.38* 10 ** -23
     c = 2.99792458 * 10 ** 8
-    mmtonm = 10**-9
-    y = 2*h*c**2/(waves**5)/(np.exp(h*c/k/waves/T)-1)*mmtonm
+    mtonm = 10**-9
+    y = 2*h*c**2/(waves**5)/(np.exp(h*c/k/waves/T)-1)*mtonm
     
     return y 
 
