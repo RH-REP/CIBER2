@@ -7,6 +7,7 @@ import pathlib
 import math
 import csv
 import pandas as pd
+import glob
 
 p_sub = pathlib.Path(__file__)
 parent_dir = str(p_sub.parent)
@@ -54,12 +55,10 @@ class CF_Class:
         self.waves_lvf, self.eps_lvf,self.eps_lvf_sterr = self.get_wv_vs_eps_at_lvf()
         self.waves_spec = ls_irradiance_class.waves
         self.ls_irradiance = ls_irradiance_class.irradiance
-
         _,self.ls_irradiance_reduced_by_ND = self._reduce_by_ND_fiter()
         self.ls_irradiance_reduced_by_ND_ip_to_lvf = interpolate.interp1d(self.waves_spec,self.ls_irradiance_reduced_by_ND,fill_value="extrapolate")(self.waves_lvf)    
-
-        loading = 1.2
-        window_transaprent = 0.99**6
+        loading = read_loading(self.waves_lvf)
+        window_transaprent = read_three_windows_transparent(self.waves_lvf)
         self.cf = self.ls_irradiance_reduced_by_ND_ip_to_lvf * window_transaprent * loading /self.eps_lvf/math.pi 
         self.sterr = self.cf /self.eps_lvf*self.eps_lvf_sterr
     
@@ -133,25 +132,6 @@ class NIR_CF_Class():
         cf_sterr = ls_radaince_ip/eps_lvf/eps_lvf*eps_sterr
         return waves_lvf,cf, cf_sterr
 
-    # def get_LVF_img(self,book_name,arm_name,):
-    #     img = self.get_eps_img(book_name,arm_name,)
-    #     img_at_lvf = img[10:150,]
-    #     return img_at_lvf 
-        # w,irr = calc_ls_radiance(book_name=book_name,kelvin=kelvin)
-
-        # self.waves_for_ir = 
-        # self.irradiance = 
-        # self.OD = OD
-        # self.arm_name = arm_name
-        # self.eps_shelf = eps_shelf
-        # self.waves_lvf, self.eps_lvf = self.get_wv_vs_eps_at_lvf()
-        # self.waves_spec = ls_irradiance_class.waves
-        # self.ls_irradiance = ls_irradiance_class.irradiance
-        # _,ls_irradiance_reduced_by_ND = self._reduce_by_ND_fiter()
-        # ls_irradiance_reduced_by_ND_ip_to_lvf = interpolate.interp1d(self.waves_spec,ls_irradiance_reduced_by_ND,fill_value="extrapolate")(self.waves_lvf)    
-        # self.cf = ls_irradiance_reduced_by_ND_ip_to_lvf/self.eps_lvf/math.pi * 0.76*1.2
-        
-
 
 def calc_ls_radiance(book_name,kelvin):
     """
@@ -165,8 +145,8 @@ def calc_ls_radiance(book_name,kelvin):
     ls_total_power_in = radiance_from_plank*pin_hole_size*solid_angle*filter_transmittance
     ls_aperture_size = (330/2)**2*np.pi
     ls_transparent = get_ls_transparent()
-    window_transparent = (0.98)**6
-    loading = 1.2
+    window_transparent = read_three_windows_transparent()
+    loading = read_loading()
     ls_radiance_out = ls_total_power_in/ls_aperture_size/np.pi*ls_transparent*window_transparent*loading
 
     return waves,ls_radiance_out
@@ -202,73 +182,48 @@ def get_filter_transmittance(filtername, filter_path = './lib/NIR_filter/2021071
     w =  np.array(body_T[1],dtype=np.float32)
     return w,filter_np
 
-def get_ls_transparent(file_path = "./lib/sphere_transmittance/Lsphere_relativeT.csv"):
-# def get_ls_transparent(file_path = "./lib/sphere_transmittance/LS_transmittance_cal_by_Scattering_98.csv"):
-    # file_path = "./lib/sphere_transmittance/Lsphere_relativeT.csv"
-    # with open(file_path) as csvfile:
-    #         reader = csv.reader(csvfile)
-    #         rawData = [row for row in reader]
-
+# """
+def get_ls_transparent():
+    file_path = "./lib/sphere_transmittance/LS_transparent_calculated_by_simulation.csv"
     df = pd.read_csv(file_path)
-
-    # print(rawData)
-    # rawData_np = np.array(rawData,dtype=np.float32)
-    # w = rawData_np.T[0]
-    # transparent = rawData_np.T[1]
     w = df["wavelength"]
     transparent = df["transparent"]
     waves = np.arange(500,2200,)
     transparent_ip = interpolate.interp1d(w,transparent,fill_value="extrapolate")(waves)
-    x_01 = np.array([500,1500])
-    y_01 = np.array([0.4,0.25])
-    measured_transaprent_correct= interpolate.interp1d(x_01,y_01,fill_value="extrapolate")(waves)
-    return transparent_ip * measured_transaprent_correct
+    return transparent_ip 
 
+def read_three_windows_transparent(waves = np.arange(500,2200,)):
+    file = "./lib/Loading/window_transparent.xlsx"
+    df = pd.read_excel(file,sheet_name = "Rotation",engine='openpyxl')
+    x = df["wv_cal"].dropna()
+    y = df["0deg_cal"].dropna()
+    # waves = np.arange(500,2200,)
+    y_ip = interpolate.interp1d(x,y,fill_value="extrapolate")(waves)
+    return y_ip
 
-# class NIR_CF_Class:
-#     def __init__(self, eps_shelf,kelvin,book_name) :
-#         self.eps_shelf = eps_shelf
-        # NIR_irradiance(kelvin)
-        # self.waves_lvf, self.eps_lvf = self.get_wv_vs_eps_at_lvf()
-        # self.waves_spec = ls_irradiance_class.waves
-        # self.ls_irradiance = ls_irradiance_class.irradiance
-        # _,ls_irradiance_reduced_by_ND = self._reduce_by_ND_fiter()
-        # ls_irradiance_reduced_by_ND_ip_to_lvf = interpolate.interp1d(self.waves_spec,ls_irradiance_reduced_by_ND,fill_value="extrapolate")(self.waves_lvf)    
-        # self.cf = ls_irradiance_reduced_by_ND_ip_to_lvf/self.eps_lvf/math.pi * 0.76*1.2
-    
-# class NIR_CF:
-#     def __init__(self, measuredFiles,bgFiles,baffle,cal_file="2021-06-29.cal") :
-#         self.measuredFiles = measuredFiles
-#         self.bgFiles = bgFiles
-#         self.baffle = baffle
-#         self._set_cal(cal_file)
-#         self.waves,self.irradiance = self._calc_wave_and_irradiance()
+def read_loading(waves = np.arange(500,2200,)):
 
-#     def _calc_wave_and_irradiance(self):
-#         integratedTime,waves,counts = spec_reader.read_data_set(self.measuredFiles)
-#         integratedTime,waves,countsOfBg = spec_reader.read_data_set(self.bgFiles)
-#         measuredCounts = counts - countsOfBg
-#         angle_ratio = self.baffle.ratio
-#         irradiance = get_irradeiance(waves,measuredCounts,integratedTime,self.cal) / angle_ratio
-#         return waves,irradiance
+    # noda_excels = "./lib/Loading/noda_calc/loading_LVF_*"
+    # list = ['loading_LVF_vis_armS.csv','loading_LVF_vis_armM.csv','loading_LVF_NIR_armL.csv']
+    # files = glob.glob(noda_excels)
+    files = ['./lib/Loading/noda_calc/loading_LVF_vis_armS.csv','./lib/Loading/noda_calc/loading_LVF_vis_armM.csv','./lib/Loading/noda_calc/loading_LVF_NIR_armL.csv']
 
-#     def show_wave_and_irradiance(self):
-#         x,y = self.waves,self.irradiance
-#         fig,ax = plt.subplots()
-#         ax.scatter(x[100:],y[100:])
-#         ax.set_xlabel("wavelength[nm]")
-#         ax.set_ylabel("Absolute Irradiance [W/m^2/nm]")
-#         plt.plot()
-#         return fig, ax
-#     def get_wave_and_irradiance(self):
-#         return self.waves,self.irradiance 
-
-
-#     def _set_cal(self,cal_file):
-#         _,cal = spec_reader.readCalFacFile(parent_dir + '/spec_lib/cal/' + cal_file)
-#         self.cal = cal
-#         # self.waves,self.irradiance = self._calc_wave_and_irradiance()
-
+    def get_w_loading(file):
+        df = pd.read_csv(file)
+        x = df["# wavelength(nm)"]
+        y = df[" loading"]
+        return x,y
+    x_all = []
+    y_all = []
+    for f in files:
+        x,y, = get_w_loading(f)
+        x_all.append(x.values)
+        y_all.append(y.values)
+    loading_x = np.array([item for l in x_all for item in l])-1
+    loading_y = np.array([item for l in y_all for item in l])-1
+    # waves = np.arange(500,2200,)
+    y_ip = interpolate.interp1d(loading_x,loading_y,fill_value="extrapolate")(waves)
+    return y_ip + 1
 
 
 def get_cf_from_theory():
@@ -276,9 +231,6 @@ def get_cf_from_theory():
     raw = spec_reader.csv_to_np(f,isHeaderExist=True)
     w,ti = raw.T[0],raw.T[1]    
     return w,ti
-# def ip_easy(x1,y1,x2):
-#     y2 = interpolate.interp1d(x1,y1,fill_value="extrapolate")(x2)
-#     return y2
 
 def get_irradeiance(waves,measured_counts,integratedTime,cf):
     dx = spec_reader.makedx(waves)
